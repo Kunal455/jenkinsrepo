@@ -1,8 +1,9 @@
 pipeline {
+
     agent any
 
     environment {
-        IMAGE_NAME = "yourdockerhubuser/demo-app"
+        IMAGE_NAME = "kunal455/jenkins-demo"
         IMAGE_TAG = "${BUILD_NUMBER}"
     }
 
@@ -11,7 +12,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                url: 'https://github.com/USERNAME/jenkins-maven-docker-demo.git'
+                    url: 'https://github.com/Kunal455/jenkinsrepo.git'
             }
         }
 
@@ -39,20 +40,21 @@ pipeline {
             }
         }
 
+        stage('Docker Login') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                }
+            }
+        }
+
         stage('Docker Push') {
             steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'dockerhub-creds',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )
-                ]) {
-                    sh '''
-                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                    docker push $IMAGE_NAME:$IMAGE_TAG
-                    '''
-                }
+                sh 'docker push $IMAGE_NAME:$IMAGE_TAG'
             }
         }
     }
